@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/* Custom Base Styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+/* Custom Component Styles */
+@layer components {
+
+  /* Glassmorphism card */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl rounded-2xl;
+  }
+
+  /* Premium gradient button */
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-blue-600 font-medium px-6 py-3 rounded-xl shadow-md hover:shadow-lg border border-blue-100 transform hover:-translate-y-0.5 transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-500 to-red-600 text-white font-medium px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200;
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply w-full px-4 py-3 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 placeholder:text-slate-400;
+  }
+
+  /* Sidebar link */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200;
+  }
+
+  .sidebar-link.active {
+    @apply bg-blue-600 text-white shadow-lg;
+  }
+
+  /* Stats card */
+  .stat-card {
+    @apply bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200;
+  }
+
+  /* SOS Button */
+  .sos-button {
+    @apply relative w-32 h-32 bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200;
+  }
+
+  /* Playbook card */
+  .playbook-card {
+    @apply bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-2xl p-6 shadow-lg;
+  }
+
+  /* Step indicator */
+  .step-number {
+    @apply w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent;
+  }
+
+  .bg-mesh {
+    background-image:
+      radial-gradient(at 40% 20%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(34, 197, 94, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(249, 115, 22, 0.1) 0px, transparent 50%);
+  }
+
+  .bg-hero-pattern {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}

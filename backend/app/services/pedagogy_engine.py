@@ -1,0 +1,344 @@
+"""
+============================================
+SAHAYAK AI - Pedagogy Engine
+============================================
+
+📌 WHAT IS THIS FILE?
+The main orchestration layer that:
+1. Takes a teacher's SOS request
+2. Extracts context
+3. Calls Gemini for playbook generation
+4. Structures the response
+5. Stores in database
+
+🎓 LEARNING POINT:
+This is the "business logic" layer - it coordinates
+multiple services to fulfill a user request.
+============================================
+"""
+
+import re
+from datetime import datetime
+from typing import Dict, Any, Optional
+
+from app.services.gemini_service import gemini_service
+from app.services.context_engine import context_engine
+from app.db.models.sos_request import SOSRequest, SOSStatus
+from app.db.models.playbook import Playbook, PlaybookAction
+from app.db.models.memory import ClassroomMemory
+
+
+class PedagogyEngine:
+    """
+    Main pedagogical coaching engine.
+    
+    Orchestrates the full flow from teacher request to playbook delivery.
+    """
+    
+    async def process_sos_request(
+        self,
+        sos_request: SOSRequest
+    ) -> Dict[str, Any]:
+        """
+        Process an SOS request and generate a teaching playbook.
+        
+        Args:
+            sos_request: The saved SOS request document
+        
+        Returns:
+            Dict containing the generated playbook and metadata
+        
+        Flow:
+        1. Extract context from raw input
+        2. Update SOS request with context
+        3. Generate playbook via Gemini
+        4. Parse and structure response
+        5. Save playbook
+        6. Update SOS request with playbook reference
+        """
+        try:
+            # Mark as processing
+            sos_request.start_processing()
+            await sos_request.save()
+            
+            # Step 1: Extract context
+            context = context_engine.extract_context(sos_request.raw_input)
+            
+            # Step 2: Update SOS with extracted context
+            sos_request.subject = context.get("subject")
+            sos_request.grade = context.get("grade")
+            sos_request.topic = context.get("topic")
+            sos_request.context_type = context.get("context_type")
+            sos_request.urgency = context.get("urgency")
+            sos_request.student_count = context.get("student_count")
+            sos_request.specific_challenge = context.get("specific_challenge")
+            await sos_request.save()
+            
+            # Step 3: Build context dict for Gemini
+            classroom_context = {
+                "subject": sos_request.subject or "General",
+                "grade": sos_request.grade or "Mixed",
+                "topic": sos_request.topic or "General Topic",
+                "student_count": sos_request.student_count or 30,
+                "urgency": sos_request.urgency.value if sos_request.urgency else "medium",
+                "language": sos_request.input_language,
+            }
+            
+            # Step 4: Generate playbook via Gemini
+            ai_response = await gemini_service.generate_playbook(
+                problem_description=sos_request.raw_input,
+                classroom_context=classroom_context
+            )
+            
+            # Step 5: Parse and structure the response
+            playbook = await self._create_playbook(
+                sos_request=sos_request,
+                ai_response=ai_response
+            )
+            
+            # Step 6: Update SOS with playbook reference
+            sos_request.complete_processing(str(playbook.id))
+            await sos_request.save()
+            
+            # Update classroom memory
+            await self._update_memory(sos_request)
+            
+            return {
+                "success": True,
+                "playbook": playbook,
+                "processing_time_ms": sos_request.processing_time_ms,
+            }
+            
+        except Exception as e:
+            sos_request.mark_failed()
+            await sos_request.save()
+            
+            return {
+                "success": False,
+                "error": str(e),
+            }
+    
+    async def _create_playbook(
+        self,
+        sos_request: SOSRequest,
+        ai_response: Dict[str, Any]
+    ) -> Playbook:
+        """
+        Create and save a playbook from AI response.
+        
+        Parses the markdown response from Gemini and structures
+        it into a proper Playbook document.
+        """
+        response_text = ai_response.get("text", "")
+        
+        # Parse the response
+        parsed = self._parse_playbook_response(response_text)
+        
+        # Create playbook document
+        playbook = Playbook(
+            sos_request_id=str(sos_request.id),
+            title=parsed.get("title", "Teaching Rescue Playbook"),
+            summary=parsed.get("summary", "AI-generated teaching strategy"),
+            immediate_actions=parsed.get("immediate_actions", []),
+            recovery_steps=parsed.get("recovery_steps", []),
+            alternatives=parsed.get("alternatives", []),
+            success_indicators=parsed.get("success_indicators", []),
+            estimated_time_minutes=parsed.get("estimated_time", 10),
+            difficulty_level=parsed.get("difficulty", "medium"),
+            model_used="gemini-pro",
+            prompt_tokens=ai_response.get("prompt_tokens"),
+            response_tokens=ai_response.get("response_tokens"),
+            language=sos_request.input_language,
+        )
+        
+        await playbook.insert()
+        return playbook
+    
+    def _parse_playbook_response(self, text: str) -> Dict[str, Any]:
+        """
+        Parse the markdown response from Gemini into structured data.
+        """
+        result = {
+            "title": "Teaching Rescue Playbook",
+            "summary": "",
+            "immediate_actions": [],
+            "recovery_steps": [],
+            "alternatives": [],
+            "success_indicators": [],
+            "estimated_time": 10,
+            "difficulty": "medium",
+        }
+        
+        if not text or len(text) < 50:
+            print("Warning: AI response too short or empty")
+            return result
+        
+        print(f"Parsing AI response ({len(text)} chars)...")
+        
+        # Extract title (more flexible matching)
+        title_patterns = [
+            r'###?\s*(?:🎯\s*)?Title\s*\n\s*(.+?)(?:\n|$)',
+            r'^##?\s+(.+?)(?:\n|$)',  # Match first heading
+            r'\*\*Title[:\s]*\*\*\s*(.+?)(?:\n|$)',
+        ]
+        for pattern in title_patterns:
+            title_match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+            if title_match:
+                result["title"] = title_match.group(1).strip()[:200]
+                break
+        
+        # Extract summary (more flexible)
+        summary_patterns = [
+            r'###?\s*(?:📋\s*)?Summary\s*\n(.+?)(?=\n###?|\n\*\*Step|\n\*\*Immediate|$)',
+            r'Summary[:\s]*\n(.+?)(?=\n###?|\n\*\*|$)',
+        ]
+        for pattern in summary_patterns:
+            summary_match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+            if summary_match:
+                result["summary"] = summary_match.group(1).strip()[:500]
+                break
+        
+        # Extract immediate actions (numbered list)
+        immediate_patterns = [
+            r'###?\s*(?:⚡\s*)?Immediate Actions[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
+            r'Immediate Actions[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
+        ]
+        for pattern in immediate_patterns:
+            immediate_match = re.search(pattern, text, re.IGNORECASE)
+            if immediate_match:
+                actions = re.findall(r'[\d]+[\.\)]\s*(.+?)(?:\n|$)', immediate_match.group(1))
+                result["immediate_actions"] = [a.strip() for a in actions[:5] if a.strip()]
+                break
+        
+        # Extract alternatives
+        alt_patterns = [
+            r'###?\s*(?:🔄\s*)?Alternative[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
+            r'Alternative[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
+        ]
+        for pattern in alt_patterns:
+            alt_match = re.search(pattern, text, re.IGNORECASE)
+            if alt_match:
+                alts = re.findall(r'[\d]+[\.\)]\s*(.+?)(?:\n|$)', alt_match.group(1))
+                result["alternatives"] = [a.strip() for a in alts[:3] if a.strip()]
+                break
+        
+        # Extract success indicators (bullet list)
+        success_patterns = [
+            r'###?\s*(?:✅\s*)?Success Indicators[^\n]*\n((?:[-•*]\s*.+\n?)+)',
+            r'Success Indicators[^\n]*\n((?:[-•*]\s*.+\n?)+)',
+        ]
+        for pattern in success_patterns:
+            success_match = re.search(pattern, text, re.IGNORECASE)
+            if success_match:
+                indicators = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', success_match.group(1))
+                result["success_indicators"] = [i.strip() for i in indicators[:5] if i.strip()]
+                break
+        
+        # Extract time estimate
+        time_match = re.search(r'Time(?:\s+Estimate)?[:\s]+(\d+)\s*(?:min|minutes)?', text, re.IGNORECASE)
+        if time_match:
+            result["estimated_time"] = min(int(time_match.group(1)), 45)
+        
+        # Extract difficulty
+        diff_match = re.search(r'Difficulty[:\s]+(\w+)', text, re.IGNORECASE)
+        if diff_match:
+            diff = diff_match.group(1).lower()
+            if diff in ["easy", "medium", "hard"]:
+                result["difficulty"] = diff
+        
+        # Parse recovery steps (multiple formats)
+        step_patterns = [
+            r'\*\*Step\s*(\d+)[:\s]*([^\*]+)\*\*\s*\((\d+)\s*(?:min|minutes)?\)',
+            r'Step\s*(\d+)[:\s]*\*\*([^\*]+)\*\*\s*\((\d+)\s*(?:min|minutes)?\)',
+        ]
+        
+        for pattern in step_patterns:
+            step_matches = re.findall(pattern, text, re.IGNORECASE)
+            if step_matches:
+                for step_num, step_title, duration in step_matches[:5]:
+                    result["recovery_steps"].append(
+                        PlaybookAction(
+                            step_number=int(step_num),
+                            action=step_title.strip(),
+                            duration_minutes=int(duration),
+                        )
+                    )
+                break
+        
+        # If no steps parsed, try simpler format
+        if not result["recovery_steps"]:
+            simple_steps = re.findall(r'\*\*Step\s*(\d+)[^:]*:\s*([^\*\n]+)', text, re.IGNORECASE)
+            for step_num, step_title in simple_steps[:5]:
+                result["recovery_steps"].append(
+                    PlaybookAction(
+                        step_number=int(step_num),
+                        action=step_title.strip(),
+                        duration_minutes=3,  # Default duration
+                    )
+                )
+        
+        print(f"Parsed: title='{result['title'][:30]}...', {len(result['immediate_actions'])} immediate actions, {len(result['recovery_steps'])} steps")
+        
+        return result
+    
+    async def _update_memory(self, sos_request: SOSRequest):
+        """
+        Update classroom memory with this SOS request.
+        
+        This helps build patterns over time for better recommendations.
+        """
+        try:
+            # Get or create memory for this teacher
+            memory = await ClassroomMemory.find_one(
+                ClassroomMemory.teacher_id == sos_request.teacher_id
+            )
+            
+            if not memory:
+                memory = ClassroomMemory(teacher_id=sos_request.teacher_id)
+            
+            # Record this SOS
+            memory.record_sos(
+                subject=sos_request.subject,
+                issue_type=sos_request.context_type.value if sos_request.context_type else None
+            )
+            
+            await memory.save()
+            
+        except Exception as e:
+            # Don't fail the main request if memory update fails
+            print(f"Warning: Failed to update memory: {e}")
+    
+    async def get_teacher_stats(self, teacher_id: str) -> Dict[str, Any]:
+        """
+        Get statistics for a teacher's dashboard.
+        """
+        memory = await ClassroomMemory.find_one(
+            ClassroomMemory.teacher_id == teacher_id
+        )
+        
+        if not memory:
+            return {
+                "total_sos_requests": 0,
+                "total_successful_resolutions": 0,
+                "top_issues": [],
+                "best_strategies": [],
+                "subjects_taught": [],
+            }
+        
+        return {
+            "total_sos_requests": memory.total_sos_requests,
+            "total_successful_resolutions": memory.total_successful_resolutions,
+            "top_issues": [
+                {"issue": p.issue_type, "count": p.occurrence_count}
+                for p in memory.get_top_issues(5)
+            ],
+            "best_strategies": [
+                {"summary": s.strategy_summary, "rating": s.effectiveness_rating}
+                for s in memory.get_best_strategies(5)
+            ],
+            "subjects_taught": memory.subjects_taught,
+        }
+
+
+# Singleton instance
+pedagogy_engine = PedagogyEngine()

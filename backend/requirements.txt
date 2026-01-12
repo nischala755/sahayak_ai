@@ -1,0 +1,40 @@
+# SAHAYAK AI - Backend Dependencies
+# Simplified for Prototype - No Firebase/Twilio
+# Run: pip install -r requirements.txt
+
+# WEB FRAMEWORK
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# DATA VALIDATION
+pydantic==2.5.3
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# DATABASE
+motor==3.3.2
+beanie==1.24.0
+
+# AUTHENTICATION (Simple JWT)
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# AI
+google-generativeai==0.3.2
+
+# HTTP & ASYNC
+httpx==0.26.0
+anyio==4.2.0
+
+# SECURITY
+python-multipart==0.0.6
+slowapi==0.1.9
+
+# UTILITIES
+python-dotenv==1.0.0
+tenacity==8.2.3
+
+# TESTING
+pytest==7.4.4
+pytest-asyncio==0.23.3
+coverage==7.4.0
