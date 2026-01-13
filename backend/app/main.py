@@ -113,12 +113,14 @@ Use the `/api/v1/sos/quick` endpoint for anonymous testing.
 # CORS Middleware
 # ============================================
 
+# Allow all origins for production deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=False,  # Must be False when using "*"
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],  # Expose all headers
 )
 
 
