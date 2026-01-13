@@ -13,6 +13,7 @@ email-validator==2.1.0
 
 # DATABASE
 motor==3.3.2
+pymongo>=4.5,<4.8
 beanie==1.24.0
 
 # AUTHENTICATION (Simple JWT)
