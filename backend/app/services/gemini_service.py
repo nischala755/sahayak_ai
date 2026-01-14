@@ -213,7 +213,7 @@ This is a generic fallback playbook. For personalized AI-generated strategies, p
 - Language Preference: {language}
 
 ## YOUR TASK
-Generate an immediate teaching rescue playbook. The teacher needs help RIGHT NOW.
+Generate an immediate teaching rescue playbook with helpful resources. The teacher needs help RIGHT NOW.
 
 ## OUTPUT FORMAT (Use this exact structure with markdown):
 
@@ -255,6 +255,29 @@ How to know if the strategy is working:
 - [Indicator 2]
 - [Indicator 3]
 
+### YouTube Videos (Recommended for this topic)
+Provide 2-3 relevant educational YouTube videos that the teacher can show students or use for reference:
+1. **[Video Title]** - https://youtube.com/watch?v=[video_id] - [Brief description, 5-10 min]
+2. **[Video Title]** - https://youtube.com/watch?v=[video_id] - [Brief description]
+3. **[Video Title]** - https://youtube.com/watch?v=[video_id] - [Brief description]
+
+(Use real, popular educational YouTube channels like: Khan Academy India, BYJU'S, Vedantu, Unacademy, NCERT Official, Diksha, LearnVern, etc.)
+
+### NCERT Reference
+- **Chapter**: [NCERT Book Name, Class X, Chapter Y - Chapter Name]
+- **Page Numbers**: [Relevant page numbers]
+- **Key Concepts**: [Concepts covered in this section]
+
+### Teaching Resources
+1. **DIKSHA App**: [Specific module or lesson name]
+2. **NCERT Textbook**: [Chapter and section reference]
+3. **Online Resource**: [Any free educational website]
+
+### Quick Teaching Tips
+- 💡 [Tip 1 - specific to this topic]
+- 💡 [Tip 2 - classroom management tip]
+- 💡 [Tip 3 - engagement tip]
+
 ### Time Estimate: [X] minutes
 ### Difficulty: [Easy/Medium/Hard]
 
@@ -266,6 +289,8 @@ How to know if the strategy is working:
 - Use culturally appropriate examples for Indian context
 - Keep language simple and actionable
 - DO NOT give generic advice - tailor everything to this specific situation
+- For YouTube videos, suggest REAL educational channels popular in India
+- NCERT references should be accurate for the grade level
 """
         
         return prompt

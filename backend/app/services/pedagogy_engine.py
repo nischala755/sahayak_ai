@@ -24,7 +24,7 @@ from typing import Dict, Any, Optional
 from app.services.gemini_service import gemini_service
 from app.services.context_engine import context_engine
 from app.db.models.sos_request import SOSRequest, SOSStatus
-from app.db.models.playbook import Playbook, PlaybookAction
+from app.db.models.playbook import Playbook, PlaybookAction, VideoResource, TeachingResource
 from app.db.models.memory import ClassroomMemory
 
 
@@ -143,9 +143,13 @@ class PedagogyEngine:
             recovery_steps=parsed.get("recovery_steps", []),
             alternatives=parsed.get("alternatives", []),
             success_indicators=parsed.get("success_indicators", []),
+            youtube_videos=parsed.get("youtube_videos", []),
+            teaching_resources=parsed.get("teaching_resources", []),
+            teaching_tips=parsed.get("teaching_tips", []),
+            ncert_reference=parsed.get("ncert_reference"),
             estimated_time_minutes=parsed.get("estimated_time", 10),
             difficulty_level=parsed.get("difficulty", "medium"),
-            model_used="gemini-pro",
+            model_used="gemini-2.5-flash",
             prompt_tokens=ai_response.get("prompt_tokens"),
             response_tokens=ai_response.get("response_tokens"),
             language=sos_request.input_language,
@@ -165,6 +169,10 @@ class PedagogyEngine:
             "recovery_steps": [],
             "alternatives": [],
             "success_indicators": [],
+            "youtube_videos": [],
+            "teaching_resources": [],
+            "teaching_tips": [],
+            "ncert_reference": None,
             "estimated_time": 10,
             "difficulty": "medium",
         }
@@ -277,7 +285,61 @@ class PedagogyEngine:
                     )
                 )
         
-        print(f"Parsed: title='{result['title'][:30]}...', {len(result['immediate_actions'])} immediate actions, {len(result['recovery_steps'])} steps")
+        # Extract YouTube videos
+        youtube_pattern = r'\*\*([^*]+)\*\*\s*[-–]\s*(https?://(?:www\.)?(?:youtube\.com|youtu\.be)/[^\s]+)\s*[-–]?\s*([^\n]*)'
+        youtube_matches = re.findall(youtube_pattern, text, re.IGNORECASE)
+        for title, url, description in youtube_matches[:5]:
+            result["youtube_videos"].append(
+                VideoResource(
+                    title=title.strip(),
+                    url=url.strip(),
+                    description=description.strip() if description else None,
+                )
+            )
+        
+        # Also try to extract YouTube links without bold title
+        if not result["youtube_videos"]:
+            simple_youtube = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
+            for i, url in enumerate(simple_youtube[:3]):
+                result["youtube_videos"].append(
+                    VideoResource(
+                        title=f"Educational Video {i+1}",
+                        url=url.strip(),
+                    )
+                )
+        
+        # Extract NCERT Reference
+        ncert_match = re.search(r'NCERT Reference[^\n]*\n(.*?)(?=###|$)', text, re.IGNORECASE | re.DOTALL)
+        if ncert_match:
+            result["ncert_reference"] = ncert_match.group(1).strip()[:500]
+        
+        # Extract Teaching Tips
+        tips_pattern = r'💡\s*(.+?)(?:\n|$)'
+        tips_matches = re.findall(tips_pattern, text)
+        result["teaching_tips"] = [t.strip() for t in tips_matches[:5] if t.strip()]
+        
+        # Also try bullet points under Teaching Tips
+        if not result["teaching_tips"]:
+            tips_section = re.search(r'Teaching Tips[^\n]*\n((?:[-•*]\s*.+\n?)+)', text, re.IGNORECASE)
+            if tips_section:
+                tips = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', tips_section.group(1))
+                result["teaching_tips"] = [t.strip() for t in tips[:5] if t.strip()]
+        
+        # Extract Teaching Resources (DIKSHA, NCERT textbook links, etc.)
+        resources_section = re.search(r'Teaching Resources[^\n]*\n(.*?)(?=###|$)', text, re.IGNORECASE | re.DOTALL)
+        if resources_section:
+            resource_lines = re.findall(r'\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)', resources_section.group(1))
+            for resource_type, desc in resource_lines[:5]:
+                result["teaching_resources"].append(
+                    TeachingResource(
+                        title=desc.strip()[:200],
+                        url="",  # Will be filled if URL found
+                        resource_type=resource_type.strip().lower(),
+                        description=desc.strip()[:200],
+                    )
+                )
+        
+        print(f"Parsed: title='{result['title'][:30]}...', {len(result['immediate_actions'])} actions, {len(result['youtube_videos'])} videos, {len(result['teaching_tips'])} tips")
         
         return result
     

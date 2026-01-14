@@ -184,8 +184,8 @@ export default function SOSPage() {
                                             type="button"
                                             onClick={toggleRecording}
                                             className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all ${isRecording
-                                                    ? 'bg-red-500 text-white animate-pulse'
-                                                    : 'bg-primary-100 text-primary-600 hover:bg-primary-200'
+                                                ? 'bg-red-500 text-white animate-pulse'
+                                                : 'bg-primary-100 text-primary-600 hover:bg-primary-200'
                                                 }`}
                                         >
                                             {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
@@ -376,7 +376,7 @@ export default function SOSPage() {
 
                                 {/* Success Indicators */}
                                 {result.playbook?.success_indicators?.length > 0 && (
-                                    <div>
+                                    <div className="mb-6">
                                         <h4 className="font-semibold text-secondary-600 mb-3">
                                             ✅ Success Indicators
                                         </h4>
@@ -385,6 +385,87 @@ export default function SOSPage() {
                                                 <li key={i}>{ind}</li>
                                             ))}
                                         </ul>
+                                    </div>
+                                )}
+
+                                {/* YouTube Videos */}
+                                {result.playbook?.youtube_videos?.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                                            📺 Recommended Videos
+                                        </h4>
+                                        <div className="space-y-3">
+                                            {result.playbook.youtube_videos.map((video, i) => (
+                                                <a
+                                                    key={i}
+                                                    href={video.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-3 p-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors group"
+                                                >
+                                                    <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                                            <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-slate-800 group-hover:text-red-600">{video.title}</p>
+                                                        {video.description && (
+                                                            <p className="text-sm text-slate-500">{video.description}</p>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-red-500 text-sm">Watch →</span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* NCERT Reference */}
+                                {result.playbook?.ncert_reference && (
+                                    <div className="mb-6">
+                                        <h4 className="font-semibold text-blue-600 mb-3 flex items-center gap-2">
+                                            📚 NCERT Reference
+                                        </h4>
+                                        <div className="p-4 bg-blue-50 rounded-lg text-slate-700">
+                                            <p className="whitespace-pre-wrap">{result.playbook.ncert_reference}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Teaching Tips */}
+                                {result.playbook?.teaching_tips?.length > 0 && (
+                                    <div className="mb-6">
+                                        <h4 className="font-semibold text-amber-600 mb-3 flex items-center gap-2">
+                                            💡 Quick Teaching Tips
+                                        </h4>
+                                        <ul className="space-y-2">
+                                            {result.playbook.teaching_tips.map((tip, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-slate-700">
+                                                    <span className="text-amber-500">💡</span>
+                                                    <span>{tip}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {/* Teaching Resources */}
+                                {result.playbook?.teaching_resources?.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-purple-600 mb-3 flex items-center gap-2">
+                                            🔗 Teaching Resources
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {result.playbook.teaching_resources.map((resource, i) => (
+                                                <div key={i} className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg text-slate-700">
+                                                    <span className="px-2 py-0.5 bg-purple-200 text-purple-700 rounded text-xs uppercase">
+                                                        {resource.resource_type}
+                                                    </span>
+                                                    <span>{resource.title}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>

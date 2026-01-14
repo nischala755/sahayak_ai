@@ -24,6 +24,22 @@ from beanie import Document, Indexed
 from pydantic import Field, BaseModel
 
 
+class VideoResource(BaseModel):
+    """A YouTube video resource for teaching."""
+    title: str
+    url: str
+    description: Optional[str] = None
+    duration: Optional[str] = None  # e.g., "5:30"
+
+
+class TeachingResource(BaseModel):
+    """An external teaching resource."""
+    title: str
+    url: str
+    resource_type: str  # youtube, ncert, diksha, website
+    description: Optional[str] = None
+
+
 class PlaybookAction(BaseModel):
     """
     A single action in the playbook.
@@ -88,6 +104,27 @@ class Playbook(Document):
         default=[],
         description="How to know if the strategy is working"
     )
+    
+    # YouTube Video Resources
+    youtube_videos: List[VideoResource] = Field(
+        default=[],
+        description="Relevant YouTube videos for the topic"
+    )
+    
+    # Teaching Resources (NCERT, DIKSHA, etc.)
+    teaching_resources: List[TeachingResource] = Field(
+        default=[],
+        description="External teaching resources and references"
+    )
+    
+    # Quick Teaching Tips
+    teaching_tips: List[str] = Field(
+        default=[],
+        description="Quick tips for the teacher"
+    )
+    
+    # NCERT Chapter Reference
+    ncert_reference: Optional[str] = None
     
     # Estimated Impact
     estimated_time_minutes: int = Field(
