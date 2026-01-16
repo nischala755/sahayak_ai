@@ -66,6 +66,33 @@ SAHAYAK operates through a sophisticated multi-layer processing system that:
 | **Success Indicators** | Know when your strategy is working |
 | **Cultural Context** | India-specific examples and approaches |
 
+### 📺 YouTube & Teaching Resources
+
+| Feature | Description |
+|---------|-------------|
+| **YouTube Video Search** | Auto-generated search links for educational videos |
+| **NCERT References** | Chapter, page numbers, and key concepts |
+| **Teaching Tips** | Quick actionable tips for each topic |
+| **DIKSHA Integration** | Links to government e-learning content |
+| **Resource Links** | NCERT, Khan Academy, BYJU'S, Vedantu |
+
+### 🌐 Multi-Language Support
+
+| Language | Script | Voice Support |
+|----------|--------|---------------|
+| **English** | Latin | ✅ en-IN |
+| **हिंदी (Hindi)** | Devanagari | ✅ hi-IN |
+| **ಕನ್ನಡ (Kannada)** | Kannada | ✅ kn-IN |
+
+### 📱 Sharing & Utility Features
+
+| Feature | Description |
+|---------|-------------|
+| **WhatsApp Share** | One-click share playbook to WhatsApp |
+| **Copy to Clipboard** | Quick copy playbook text |
+| **Voice Readout** | Text-to-speech reads the playbook aloud |
+| **Print Playbook** | Print-friendly playbook format |
+
 ### 📊 Context Extraction Engine
 
 | Feature | Description |
@@ -102,6 +129,16 @@ SAHAYAK operates through a sophisticated multi-layer processing system that:
 | **Role-Based Access** | Teacher, CRP, DIET roles |
 | **Password Hashing** | BCrypt encryption |
 | **CORS Protection** | Configured cross-origin security |
+
+---
+
+## 🎯 Live Demo
+
+| Platform | URL |
+|----------|-----|
+| **Frontend (Vercel)** | [sahayak-ai-xi.vercel.app](https://sahayak-ai-xi.vercel.app) |
+| **Backend API (Render)** | [sahayak-ai-p720.onrender.com](https://sahayak-ai-p720.onrender.com) |
+| **Quick SOS Demo** | [Try Now](https://sahayak-ai-xi.vercel.app/sos) |
 
 ---
 
