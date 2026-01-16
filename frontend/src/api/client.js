@@ -82,10 +82,11 @@ export const sosAPI = {
     },
 
     // Quick SOS (no auth required for demo)
-    quick: async (rawInput, subject = null, grade = null) => {
+    quick: async (rawInput, subject = null, grade = null, language = 'English') => {
         const params = new URLSearchParams({ raw_input: rawInput });
         if (subject) params.append('subject', subject);
         if (grade) params.append('grade', grade);
+        if (language) params.append('language', language);
         const response = await api.post(`/sos/quick?${params.toString()}`);
         return response.data;
     },

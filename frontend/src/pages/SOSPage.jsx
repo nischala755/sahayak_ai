@@ -27,6 +27,7 @@ export default function SOSPage() {
     const [input, setInput] = useState('');
     const [subject, setSubject] = useState('');
     const [grade, setGrade] = useState('');
+    const [language, setLanguage] = useState('English');
     const [isRecording, setIsRecording] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -92,7 +93,7 @@ export default function SOSPage() {
         setResult(null);
 
         try {
-            const response = await sosAPI.quick(input, subject || null, grade || null);
+            const response = await sosAPI.quick(input, subject || null, grade || null, language);
             if (response.success) {
                 setResult(response);
             } else {
@@ -158,7 +159,9 @@ export default function SOSPage() {
         const text = getPlaybookText();
         if ('speechSynthesis' in window && text) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-IN';
+            // Set language based on selected language
+            const langMap = { 'English': 'en-IN', 'Hindi': 'hi-IN', 'Kannada': 'kn-IN' };
+            utterance.lang = langMap[language] || 'en-IN';
             utterance.rate = 0.9;
             utterance.onend = () => setIsSpeaking(false);
             speechSynthRef.current = utterance;
@@ -313,6 +316,33 @@ export default function SOSPage() {
                                                 <option key={g} value={g}>Class {g}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                </div>
+
+                                {/* Language Selection */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        🌐 Playbook Language
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { code: 'English', label: 'English', flag: '🇬🇧' },
+                                            { code: 'Hindi', label: 'हिंदी', flag: '🇮🇳' },
+                                            { code: 'Kannada', label: 'ಕನ್ನಡ', flag: '🏛️' },
+                                        ].map((lang) => (
+                                            <button
+                                                key={lang.code}
+                                                type="button"
+                                                onClick={() => setLanguage(lang.code)}
+                                                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${language === lang.code
+                                                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                                                    : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                                                    }`}
+                                            >
+                                                <span>{lang.flag}</span>
+                                                <span className="font-medium">{lang.label}</span>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 

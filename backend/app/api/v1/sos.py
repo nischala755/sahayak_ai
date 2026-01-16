@@ -146,6 +146,7 @@ async def quick_sos(
     raw_input: str = Query(..., min_length=5, max_length=2000, description="Describe your classroom problem"),
     subject: Optional[str] = Query(None, description="Subject being taught"),
     grade: Optional[str] = Query(None, description="Class/Grade level"),
+    language: str = Query("English", description="Playbook language: English, Hindi, or Kannada"),
     current_user: Optional[User] = Depends(get_optional_user)
 ):
     """
@@ -155,10 +156,14 @@ async def quick_sos(
     - With authentication (tracked to user)
     - Without authentication (anonymous, for demos)
     
-    This is perfect for prototype demonstrations.
+    Supports languages: English, Hindi (हिंदी), Kannada (ಕನ್ನಡ)
     """
     teacher_id = str(current_user.id) if current_user else "anonymous"
     teacher_name = current_user.name if current_user else "Anonymous Teacher"
+    
+    # Map language code
+    lang_map = {"Hindi": "hi", "Kannada": "kn", "English": "en"}
+    input_language = lang_map.get(language, "en")
     
     # Create SOS request
     sos_request = SOSRequest(
@@ -166,7 +171,7 @@ async def quick_sos(
         teacher_name=teacher_name,
         raw_input=raw_input,
         input_type="text",
-        input_language="en",
+        input_language=input_language,
         subject=subject,
         grade=grade,
     )

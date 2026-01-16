@@ -291,6 +291,13 @@ Provide 2-3 relevant educational YouTube videos that the teacher can show studen
 - DO NOT give generic advice - tailor everything to this specific situation
 - For YouTube videos, suggest REAL educational channels popular in India
 - NCERT references should be accurate for the grade level
+
+## LANGUAGE INSTRUCTION (CRITICAL):
+Generate the ENTIRE playbook in **{language}** language.
+- If language is "Hindi": Write everything in Hindi (Devanagari script). Use हिंदी for all content.
+- If language is "Kannada": Write everything in Kannada (ಕನ್ನಡ script). Use ಕನ್ನಡ for all content.
+- If language is "English": Write in simple English suitable for government school teachers.
+Keep markdown headers in English for parsing, but ALL content (title, summary, actions, tips) MUST be in the requested language.
 """
         
         return prompt

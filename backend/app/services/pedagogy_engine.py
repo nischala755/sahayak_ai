@@ -81,7 +81,10 @@ class PedagogyEngine:
                 "topic": sos_request.topic or "General Topic",
                 "student_count": sos_request.student_count or 30,
                 "urgency": sos_request.urgency.value if sos_request.urgency else "medium",
-                "language": sos_request.input_language,
+                # Map language code to full name for Gemini
+                "language": {"hi": "Hindi", "kn": "Kannada", "en": "English"}.get(
+                    sos_request.input_language, "English"
+                ),
             }
             
             # Step 4: Generate playbook via Gemini
