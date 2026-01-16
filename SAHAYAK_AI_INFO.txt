@@ -1,0 +1,108 @@
+SAHAYAK AI - Just In Time Classroom Coaching Engine
+====================================================
+
+Real-time AI-powered pedagogical rescue for government school teachers 
+during live classroom breakdowns.
+
+"Every Teacher Deserves a Coach. Every Classroom Deserves Success."
+
+
+LIVE DEMO
+---------
+Frontend: https://sahayak-ai-xi.vercel.app
+Quick SOS Demo: https://sahayak-ai-xi.vercel.app/sos
+Backend API: https://sahayak-ai-p720.onrender.com
+API Documentation: https://sahayak-ai-p720.onrender.com/docs
+
+
+HOW IT WORKS
+------------
+1. Teacher describes a classroom problem (voice or text)
+2. AI instantly generates a teaching rescue playbook
+3. Get immediate actions, recovery steps, and resources
+4. Share via WhatsApp or print for classroom use
+
+
+KEY FEATURES
+------------
+* Voice & Text SOS Input - Speak or type your problem
+* AI Playbook Generation - Powered by Google Gemini 2.5 Flash
+* Multi-Language Support - English, Hindi (हिंदी), Kannada (ಕನ್ನಡ)
+* YouTube Video Links - Educational video recommendations
+* NCERT References - Chapter, page numbers, key concepts  
+* Teaching Tips - Quick actionable classroom tips
+* DIKSHA Integration - Government e-learning resources
+* WhatsApp Sharing - One-click share to colleagues
+* Voice Readout - Text-to-speech for busy teachers
+* Print-Friendly - Clean printable format
+* Context Detection - Auto-detects subject, grade, topic
+* 3-5 Second Response - Instant AI-generated strategies
+
+
+SUPPORTED LANGUAGES
+-------------------
+* English (en-IN)
+* Hindi - हिंदी (hi-IN)  
+* Kannada - ಕನ್ನಡ (kn-IN)
+
+
+TECHNOLOGY STACK
+----------------
+Frontend: React, Vite, Tailwind CSS, Framer Motion
+Backend: FastAPI, Python, Pydantic, Beanie ODM
+Database: MongoDB Atlas
+AI Engine: Google Gemini 2.5 Flash
+Authentication: JWT with BCrypt
+Deployment: Vercel (Frontend) + Render (Backend)
+
+
+USER ROLES
+----------
+* Teacher - Create SOS requests, view playbooks, track history
+* CRP (Cluster Resource Person) - Cluster analytics, teacher support
+* DIET (District Institute) - District-wide patterns, resource planning
+
+
+TRY IT NOW
+----------
+1. Go to: https://sahayak-ai-xi.vercel.app/sos
+2. Select your preferred language
+3. Describe your classroom problem
+4. Get instant AI-powered teaching rescue strategy!
+
+Example problems to try:
+- "Students don't understand fractions with different denominators"
+- "Class is too noisy and students are not paying attention"
+- "Students are confused about photosynthesis"
+- "How to explain the water cycle to Class 3 students"
+
+
+API ENDPOINTS
+-------------
+POST /api/v1/sos/quick - Quick SOS (no auth, for demos)
+POST /api/v1/sos/ - Submit SOS (authenticated)
+GET /api/v1/sos/ - Get SOS history
+GET /api/v1/dashboard/teacher - Teacher dashboard
+GET /health - System health check
+
+
+GITHUB REPOSITORY
+-----------------
+https://github.com/nischala755/sahayak_ai
+
+Clone: git clone https://github.com/nischala755/sahayak_ai.git
+
+
+CONTACT & SUPPORT
+-----------------
+GitHub Issues: https://github.com/nischala755/sahayak_ai/issues
+
+
+LICENSE
+-------
+MIT License
+
+
+====================================================
+Made with love for Government School Teachers of India
+====================================================
