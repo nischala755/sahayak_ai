@@ -134,6 +134,22 @@ class SOSWithPlaybook(SOSResponse):
 # Playbook Schemas
 # ============================================
 
+class VideoResourceSchema(BaseModel):
+    """Schema for a YouTube video resource."""
+    title: str
+    url: str
+    description: Optional[str] = None
+    duration: Optional[str] = None
+
+
+class TeachingResourceSchema(BaseModel):
+    """Schema for a teaching resource."""
+    title: str
+    url: str = ""
+    resource_type: str
+    description: Optional[str] = None
+
+
 class PlaybookActionSchema(BaseModel):
     """Schema for a playbook action step."""
     step_number: int
@@ -154,6 +170,12 @@ class PlaybookResponse(BaseModel):
     recovery_steps: List[PlaybookActionSchema]
     alternatives: List[str]
     success_indicators: List[str]
+    # New YouTube and Resources fields
+    youtube_videos: List[VideoResourceSchema] = []
+    teaching_resources: List[TeachingResourceSchema] = []
+    teaching_tips: List[str] = []
+    ncert_reference: Optional[str] = None
+    # Metadata
     estimated_time_minutes: int
     difficulty_level: str
     language: str

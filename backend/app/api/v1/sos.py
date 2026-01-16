@@ -124,6 +124,16 @@ async def create_sos_request(
             ],
             "alternatives": playbook.alternatives,
             "success_indicators": playbook.success_indicators,
+            "youtube_videos": [
+                {"title": v.title, "url": v.url, "description": v.description}
+                for v in playbook.youtube_videos
+            ] if playbook.youtube_videos else [],
+            "teaching_resources": [
+                {"title": r.title, "url": r.url, "resource_type": r.resource_type, "description": r.description}
+                for r in playbook.teaching_resources
+            ] if playbook.teaching_resources else [],
+            "teaching_tips": playbook.teaching_tips or [],
+            "ncert_reference": playbook.ncert_reference,
             "estimated_time_minutes": playbook.estimated_time_minutes,
             "difficulty_level": playbook.difficulty_level,
         }
@@ -185,6 +195,16 @@ async def quick_sos(
                 ],
                 "alternatives": playbook.alternatives,
                 "success_indicators": playbook.success_indicators,
+                "youtube_videos": [
+                    {"title": v.title, "url": v.url, "description": v.description}
+                    for v in playbook.youtube_videos
+                ] if playbook.youtube_videos else [],
+                "teaching_resources": [
+                    {"title": r.title, "url": r.url, "resource_type": r.resource_type, "description": r.description}
+                    for r in playbook.teaching_resources
+                ] if playbook.teaching_resources else [],
+                "teaching_tips": playbook.teaching_tips or [],
+                "ncert_reference": playbook.ncert_reference,
                 "time_minutes": playbook.estimated_time_minutes,
                 "difficulty": playbook.difficulty_level,
             },
