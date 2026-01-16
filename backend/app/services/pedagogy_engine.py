@@ -284,47 +284,46 @@ class PedagogyEngine:
                         duration_minutes=3,  # Default duration
                     )
                 )
+        # Generate YouTube search links based on detected topic
+        # AI cannot generate real YouTube URLs - generate search links instead
+        subject = result.get("subject", "")
+        topic = result.get("topic", "")
+        title = result.get("title", "")
         
-        # Extract YouTube videos
-        # Extract YouTube videos - multiple patterns for flexibility
-        # Pattern 1: **Title** - URL - Description
-        youtube_pattern1 = r'\*\*([^*]+)\*\*\s*[-–:]\s*(https?://[^\s]+youtube[^\s]+)\s*[-–:]?\s*([^\n]*)'
-        # Pattern 2: Numbered list with URL
-        youtube_pattern2 = r'\d+\.\s*\*\*([^*]+)\*\*\s*[-–:]\s*(https?://[^\s]+)\s*[-–:]?\s*([^\n]*)'
-        # Pattern 3: Just look for any YouTube URLs
-        youtube_pattern3 = r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)\]]+)'
+        # Build search query from available context
+        search_query = ""
+        if topic:
+            search_query = topic
+        elif title and len(title) > 10:
+            search_query = title
+        else:
+            # Extract topic from title/summary
+            search_query = re.sub(r'[^\w\s]', '', result.get("summary", "")[:50])
         
-        # Try pattern 1 first
-        youtube_matches = re.findall(youtube_pattern1, text, re.IGNORECASE)
-        if not youtube_matches:
-            youtube_matches = re.findall(youtube_pattern2, text, re.IGNORECASE)
+        if search_query:
+            import urllib.parse
+            encoded_query = urllib.parse.quote(f"{search_query} {subject} class".strip())
+            
+            # Add relevant YouTube search links
+            result["youtube_videos"] = [
+                VideoResource(
+                    title=f"📚 {search_query} - Educational Video",
+                    url=f"https://www.youtube.com/results?search_query={encoded_query}+NCERT+Hindi",
+                    description="Search for Hindi medium educational videos"
+                ),
+                VideoResource(
+                    title=f"🎓 {search_query} - Khan Academy Style",
+                    url=f"https://www.youtube.com/results?search_query={encoded_query}+Khan+Academy+India",
+                    description="Search for Khan Academy India videos"
+                ),
+                VideoResource(
+                    title=f"📖 {search_query} - BYJU'S / Vedantu",
+                    url=f"https://www.youtube.com/results?search_query={encoded_query}+BYJU+Vedantu",
+                    description="Search for BYJU'S and Vedantu explanations"
+                ),
+            ]
         
-        for match in youtube_matches[:5]:
-            if len(match) >= 2:
-                title = match[0].strip() if match[0] else "Educational Video"
-                url = match[1].strip() if match[1] else ""
-                description = match[2].strip() if len(match) > 2 and match[2] else None
-                if url and "youtube" in url.lower():
-                    result["youtube_videos"].append(
-                        VideoResource(
-                            title=title,
-                            url=url,
-                            description=description,
-                        )
-                    )
-        
-        # Fallback: extract any YouTube URLs
-        if not result["youtube_videos"]:
-            simple_youtube = re.findall(youtube_pattern3, text)
-            for i, url in enumerate(simple_youtube[:3]):
-                result["youtube_videos"].append(
-                    VideoResource(
-                        title=f"Recommended Educational Video {i+1}",
-                        url=url.strip(),
-                    )
-                )
-        
-        print(f"YouTube extraction: found {len(result['youtube_videos'])} videos in response")
+        print(f"YouTube: generated {len(result['youtube_videos'])} search links for '{search_query}'")
         
         # Extract NCERT Reference - more flexible pattern
         ncert_patterns = [
@@ -341,9 +340,7 @@ class PedagogyEngine:
                     break
         
         # Extract Teaching Tips - more flexible patterns
-        # Pattern 1: With emoji
         tips_with_emoji = re.findall(r'[💡🔹•]\s*(.+?)(?:\n|$)', text)
-        # Pattern 2: Section-based
         tips_section = re.search(r'(?:Quick )?Teaching Tips[^\n]*\n(.*?)(?=###|\n\n|$)', text, re.IGNORECASE | re.DOTALL)
         
         if tips_with_emoji:
@@ -352,10 +349,19 @@ class PedagogyEngine:
             tips = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', tips_section.group(1))
             result["teaching_tips"] = [t.strip() for t in tips[:5] if t.strip() and len(t.strip()) > 5]
         
+        # Add generic helpful tips if none found
+        if not result["teaching_tips"]:
+            result["teaching_tips"] = [
+                "Use visual aids like diagrams and charts",
+                "Break complex concepts into smaller steps", 
+                "Encourage peer discussion and teaching",
+                "Relate topics to real-world examples students know",
+                "Check understanding with quick formative questions"
+            ]
+        
         # Extract Teaching Resources
         resources_section = re.search(r'Teaching Resources[^\n]*\n(.*?)(?=###|\n\n|$)', text, re.IGNORECASE | re.DOTALL)
         if resources_section:
-            # Look for **ResourceType**: Description or numbered list
             resource_patterns = [
                 r'\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)',
                 r'\d+\.\s*\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)',
@@ -373,6 +379,23 @@ class PedagogyEngine:
                             )
                         )
                     break
+        
+        # Add default teaching resources if none found
+        if not result["teaching_resources"]:
+            result["teaching_resources"] = [
+                TeachingResource(
+                    title="DIKSHA App - Free NCERT Content",
+                    url="https://diksha.gov.in/",
+                    resource_type="diksha",
+                    description="Official government e-learning platform"
+                ),
+                TeachingResource(
+                    title="NCERT Textbooks Online",
+                    url="https://ncert.nic.in/textbook.php",
+                    resource_type="ncert",
+                    description="Free downloadable NCERT textbooks"
+                ),
+            ]
         
         print(f"Parsed: title='{result['title'][:30]}...', {len(result['immediate_actions'])} actions, {len(result['youtube_videos'])} videos, {len(result['teaching_tips'])} tips")
         
