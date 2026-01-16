@@ -286,58 +286,93 @@ class PedagogyEngine:
                 )
         
         # Extract YouTube videos
-        youtube_pattern = r'\*\*([^*]+)\*\*\s*[-–]\s*(https?://(?:www\.)?(?:youtube\.com|youtu\.be)/[^\s]+)\s*[-–]?\s*([^\n]*)'
-        youtube_matches = re.findall(youtube_pattern, text, re.IGNORECASE)
-        for title, url, description in youtube_matches[:5]:
-            result["youtube_videos"].append(
-                VideoResource(
-                    title=title.strip(),
-                    url=url.strip(),
-                    description=description.strip() if description else None,
-                )
-            )
+        # Extract YouTube videos - multiple patterns for flexibility
+        # Pattern 1: **Title** - URL - Description
+        youtube_pattern1 = r'\*\*([^*]+)\*\*\s*[-–:]\s*(https?://[^\s]+youtube[^\s]+)\s*[-–:]?\s*([^\n]*)'
+        # Pattern 2: Numbered list with URL
+        youtube_pattern2 = r'\d+\.\s*\*\*([^*]+)\*\*\s*[-–:]\s*(https?://[^\s]+)\s*[-–:]?\s*([^\n]*)'
+        # Pattern 3: Just look for any YouTube URLs
+        youtube_pattern3 = r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)\]]+)'
         
-        # Also try to extract YouTube links without bold title
+        # Try pattern 1 first
+        youtube_matches = re.findall(youtube_pattern1, text, re.IGNORECASE)
+        if not youtube_matches:
+            youtube_matches = re.findall(youtube_pattern2, text, re.IGNORECASE)
+        
+        for match in youtube_matches[:5]:
+            if len(match) >= 2:
+                title = match[0].strip() if match[0] else "Educational Video"
+                url = match[1].strip() if match[1] else ""
+                description = match[2].strip() if len(match) > 2 and match[2] else None
+                if url and "youtube" in url.lower():
+                    result["youtube_videos"].append(
+                        VideoResource(
+                            title=title,
+                            url=url,
+                            description=description,
+                        )
+                    )
+        
+        # Fallback: extract any YouTube URLs
         if not result["youtube_videos"]:
-            simple_youtube = re.findall(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[^\s\)]+)', text)
+            simple_youtube = re.findall(youtube_pattern3, text)
             for i, url in enumerate(simple_youtube[:3]):
                 result["youtube_videos"].append(
                     VideoResource(
-                        title=f"Educational Video {i+1}",
+                        title=f"Recommended Educational Video {i+1}",
                         url=url.strip(),
                     )
                 )
         
-        # Extract NCERT Reference
-        ncert_match = re.search(r'NCERT Reference[^\n]*\n(.*?)(?=###|$)', text, re.IGNORECASE | re.DOTALL)
-        if ncert_match:
-            result["ncert_reference"] = ncert_match.group(1).strip()[:500]
+        print(f"YouTube extraction: found {len(result['youtube_videos'])} videos in response")
         
-        # Extract Teaching Tips
-        tips_pattern = r'💡\s*(.+?)(?:\n|$)'
-        tips_matches = re.findall(tips_pattern, text)
-        result["teaching_tips"] = [t.strip() for t in tips_matches[:5] if t.strip()]
+        # Extract NCERT Reference - more flexible pattern
+        ncert_patterns = [
+            r'###?\s*NCERT Reference[^\n]*\n(.*?)(?=###|\n\n|$)',
+            r'NCERT Reference[:\s]*(.*?)(?=###|\n\n|$)',
+            r'\*\*Chapter\*\*[:\s]*([^\n]+)',
+        ]
+        for pattern in ncert_patterns:
+            ncert_match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
+            if ncert_match:
+                ncert_text = ncert_match.group(1).strip()[:500]
+                if ncert_text and len(ncert_text) > 10:
+                    result["ncert_reference"] = ncert_text
+                    break
         
-        # Also try bullet points under Teaching Tips
-        if not result["teaching_tips"]:
-            tips_section = re.search(r'Teaching Tips[^\n]*\n((?:[-•*]\s*.+\n?)+)', text, re.IGNORECASE)
-            if tips_section:
-                tips = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', tips_section.group(1))
-                result["teaching_tips"] = [t.strip() for t in tips[:5] if t.strip()]
+        # Extract Teaching Tips - more flexible patterns
+        # Pattern 1: With emoji
+        tips_with_emoji = re.findall(r'[💡🔹•]\s*(.+?)(?:\n|$)', text)
+        # Pattern 2: Section-based
+        tips_section = re.search(r'(?:Quick )?Teaching Tips[^\n]*\n(.*?)(?=###|\n\n|$)', text, re.IGNORECASE | re.DOTALL)
         
-        # Extract Teaching Resources (DIKSHA, NCERT textbook links, etc.)
-        resources_section = re.search(r'Teaching Resources[^\n]*\n(.*?)(?=###|$)', text, re.IGNORECASE | re.DOTALL)
+        if tips_with_emoji:
+            result["teaching_tips"] = [t.strip() for t in tips_with_emoji[:5] if t.strip() and len(t.strip()) > 5]
+        elif tips_section:
+            tips = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', tips_section.group(1))
+            result["teaching_tips"] = [t.strip() for t in tips[:5] if t.strip() and len(t.strip()) > 5]
+        
+        # Extract Teaching Resources
+        resources_section = re.search(r'Teaching Resources[^\n]*\n(.*?)(?=###|\n\n|$)', text, re.IGNORECASE | re.DOTALL)
         if resources_section:
-            resource_lines = re.findall(r'\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)', resources_section.group(1))
-            for resource_type, desc in resource_lines[:5]:
-                result["teaching_resources"].append(
-                    TeachingResource(
-                        title=desc.strip()[:200],
-                        url="",  # Will be filled if URL found
-                        resource_type=resource_type.strip().lower(),
-                        description=desc.strip()[:200],
-                    )
-                )
+            # Look for **ResourceType**: Description or numbered list
+            resource_patterns = [
+                r'\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)',
+                r'\d+\.\s*\*\*([^*]+)\*\*[:\s]*(.+?)(?:\n|$)',
+            ]
+            for pattern in resource_patterns:
+                resource_lines = re.findall(pattern, resources_section.group(1))
+                if resource_lines:
+                    for resource_type, desc in resource_lines[:5]:
+                        result["teaching_resources"].append(
+                            TeachingResource(
+                                title=desc.strip()[:200],
+                                url="",
+                                resource_type=resource_type.strip().lower(),
+                                description=desc.strip()[:200],
+                            )
+                        )
+                    break
         
         print(f"Parsed: title='{result['title'][:30]}...', {len(result['immediate_actions'])} actions, {len(result['youtube_videos'])} videos, {len(result['teaching_tips'])} tips")
         
