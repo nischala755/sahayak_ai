@@ -36,6 +36,9 @@ slowapi==0.1.9
 python-dotenv==1.0.0
 tenacity==8.2.3
 
+# CACHING
+redis==5.0.1
+
 # TESTING
 pytest==7.4.4
 pytest-asyncio==0.23.3

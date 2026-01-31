@@ -23,6 +23,7 @@ from typing import Dict, Any, Optional
 
 from app.services.gemini_service import gemini_service
 from app.services.context_engine import context_engine
+from app.services.redis_cache import redis_cache
 from app.db.models.sos_request import SOSRequest, SOSStatus
 from app.db.models.playbook import Playbook, PlaybookAction, VideoResource, TeachingResource
 from app.db.models.memory import ClassroomMemory
@@ -61,17 +62,18 @@ class PedagogyEngine:
             sos_request.start_processing()
             await sos_request.save()
             
-            # Step 1: Extract context
-            context = context_engine.extract_context(sos_request.raw_input)
+            # Step 1: Extract context from raw input
+            extracted_context = context_engine.extract_context(sos_request.raw_input)
             
-            # Step 2: Update SOS with extracted context
-            sos_request.subject = context.get("subject")
-            sos_request.grade = context.get("grade")
-            sos_request.topic = context.get("topic")
-            sos_request.context_type = context.get("context_type")
-            sos_request.urgency = context.get("urgency")
-            sos_request.student_count = context.get("student_count")
-            sos_request.specific_challenge = context.get("specific_challenge")
+            # Step 2: Update SOS with context - PRESERVE user-provided values
+            # Only use extracted values if user didn't provide them
+            sos_request.subject = sos_request.subject or extracted_context.get("subject")
+            sos_request.grade = sos_request.grade or extracted_context.get("grade")
+            sos_request.topic = extracted_context.get("topic")  # Topic always from extraction
+            sos_request.context_type = extracted_context.get("context_type")
+            sos_request.urgency = extracted_context.get("urgency")
+            sos_request.student_count = extracted_context.get("student_count")
+            sos_request.specific_challenge = extracted_context.get("specific_challenge")
             await sos_request.save()
             
             # Step 3: Build context dict for Gemini
@@ -87,11 +89,36 @@ class PedagogyEngine:
                 ),
             }
             
-            # Step 4: Generate playbook via Gemini
-            ai_response = await gemini_service.generate_playbook(
-                problem_description=sos_request.raw_input,
-                classroom_context=classroom_context
+            # Step 4: Check Redis cache using SEMANTIC matching (keywords, not hash)
+            language_name = classroom_context["language"]
+            cached_response = await redis_cache.get_cached_playbook(
+                subject=sos_request.subject,
+                grade=sos_request.grade,
+                topic=sos_request.topic,  # Key for semantic matching!
+                language=language_name
             )
+            
+            if cached_response:
+                # Cache hit - use cached AI response
+                print(f"⚡ SEMANTIC CACHE HIT for: {sos_request.subject}/{sos_request.grade}/{sos_request.topic}")
+                ai_response = cached_response
+            else:
+                # Cache miss - call Gemini AI
+                print(f"🤖 Calling Gemini AI for: {sos_request.subject}/{sos_request.grade}/{sos_request.topic}")
+                ai_response = await gemini_service.generate_playbook(
+                    problem_description=sos_request.raw_input,
+                    classroom_context=classroom_context
+                )
+                
+                # Cache the response using semantic key (subject/grade/topic)
+                if ai_response.get("text"):
+                    await redis_cache.cache_playbook(
+                        response=ai_response,
+                        subject=sos_request.subject,
+                        grade=sos_request.grade,
+                        topic=sos_request.topic,
+                        language=language_name
+                    )
             
             # Step 5: Parse and structure the response
             playbook = await self._create_playbook(

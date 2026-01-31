@@ -1,0 +1,164 @@
+============================================
+SAHAYAK AI - Redis Caching System
+============================================
+
+🎯 WHAT IS THIS?
+----------------
+This document explains how Redis caching works in SAHAYAK AI to improve
+performance and reduce Google Gemini API costs.
+
+
+🔧 HOW IT WORKS
+---------------
+1. Teacher submits SOS request (e.g., "Students don't understand fractions")
+
+2. System generates a CACHE KEY based on:
+   - Subject (e.g., "mathematics")
+   - Grade (e.g., "5")
+   - Language (e.g., "english")
+   - Input hash (SHA-256 of normalized query)
+   
+   Example key: "playbook:mathematics:5:english:a1b2c3d4e5f6g7h8"
+
+3. CACHE CHECK:
+   - If key EXISTS in Redis → Return cached playbook (⚡ ~50ms)
+   - If key MISSING → Call Gemini AI → Store result → Return (🐢 ~4000ms)
+
+4. CACHE STORAGE:
+   - Successful AI responses are stored in Redis
+   - TTL (Time To Live): 24 hours (configurable via REDIS_CACHE_TTL)
+   - After 24 hours, cache entry expires and fresh AI response is generated
+
+
+📊 WHAT GETS CACHED
+-------------------
+Only SUCCESSFUL playbook responses are cached. This includes:
+
+✅ CACHED:
+- AI-generated playbook title
+- Summary of the teaching strategy
+- Immediate actions (3-5 steps)
+- Recovery steps with timing
+- Alternative strategies
+- Success indicators
+- Teaching tips
+- NCERT references
+- YouTube video search links
+
+❌ NOT CACHED:
+- Failed AI responses
+- Error messages
+- User feedback/ratings
+- SOS request metadata (stored in MongoDB)
+
+
+📁 CACHE KEY FORMAT (SEMANTIC MATCHING)
+-------------------
+Format: "playbook:{subject}:{grade}:{topic}:{language}"
+
+** THIS IS SEMANTIC CACHING - NOT HASH-BASED **
+
+All of these queries will HIT THE SAME CACHE:
+✅ "Class 5 students struggling with fractions"
+✅ "class 5 fractions"
+✅ "fractions grade 5"
+✅ "help with fractions class 5"
+✅ "My 5th grade students can't understand fractions"
+
+They all extract to: playbook:mathematics:5:fractions:english
+
+FALLBACK MATCHING:
+If exact key doesn't exist, system tries broader matches:
+1. playbook:mathematics:5:fractions:english (exact)
+2. playbook:mathematics:any:fractions:english (ignore grade)
+3. playbook:mathematics:5:general:english (ignore topic)
+4. playbook:mathematics:any:general:english (just subject)
+
+
+⏱️ CACHE TTL (TIME TO LIVE)
+---------------------------
+Default: 86400 seconds (24 hours)
+
+Why 24 hours?
+- Educational content doesn't change frequently
+- Balances freshness with cost savings
+- Allows daily refresh of cached strategies
+
+To change: Set REDIS_CACHE_TTL in your .env file
+
+
+📈 MONITORING CACHE PERFORMANCE
+-------------------------------
+Check cache statistics at: GET /cache/stats
+
+Response example:
+{
+  "cache_enabled": true,
+  "cache_connected": true,
+  "cache_hits": 45,
+  "cache_misses": 12,
+  "cache_errors": 0,
+  "cache_hit_rate_percent": 78.95,
+  "cache_ttl_seconds": 86400
+}
+
+Target: Aim for >50% hit rate for cost savings
+
+
+🛠️ CONFIGURATION
+----------------
+In your .env file:
+
+# Redis URL (local or cloud)
+REDIS_URL=redis://localhost:6379/0
+
+# Cache TTL in seconds (default: 24 hours)
+REDIS_CACHE_TTL=86400
+
+# Enable/disable caching
+REDIS_ENABLED=true
+
+
+🚀 BENEFITS
+-----------
+1. SPEED: Cached responses return in ~50ms vs ~4000ms for AI calls
+2. COST: Reduce Gemini API calls by 50-80% with good cache hit rate
+3. RELIABILITY: If Gemini is slow/down, cached responses still work
+4. SCALABILITY: Handle more concurrent users with less AI load
+
+
+⚠️ GRACEFUL DEGRADATION
+-----------------------
+If Redis is unavailable:
+- System continues to work normally
+- All requests go directly to Gemini AI
+- Warning message logged at startup
+- No data loss, just slower responses
+
+
+🔄 CACHE INVALIDATION
+---------------------
+Currently, cache entries expire automatically after TTL.
+
+Future improvements could add:
+- Manual cache clear endpoint (admin only)
+- Subject-specific cache refresh
+- Version-based invalidation
+
+
+📝 LOG MESSAGES
+---------------
+Watch for these in your console:
+
+✅ Redis connected: redis://localhost:6379/0
+🎯 CACHE HIT: playbook:mathematics:5:english:7f8a9b2c
+❌ CACHE MISS: playbook:science:8:hindi:1a2b3c4d
+💾 CACHED: playbook:science:8:hindi:1a2b3c4d (TTL: 86400s)
+⚡ Using cached playbook for: Students don't understand...
+⚠️ Redis connection failed: Connection refused
+
+
+============================================
+Created: 2026-01-31
+Author: SAHAYAK AI Development Team
+============================================

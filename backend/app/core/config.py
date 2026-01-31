@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     ]
     
     # --------------------------------------------
+    # Redis Caching
+    # --------------------------------------------
+    redis_url: str = "redis://localhost:6379/0"
+    redis_cache_ttl: int = 86400  # 24 hours in seconds
+    redis_enabled: bool = True
+    
+    # --------------------------------------------
     # Logging
     # --------------------------------------------
     log_level: str = "INFO"

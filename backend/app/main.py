@@ -30,6 +30,7 @@ from app.core.config import settings
 from app.db.mongodb import connect_to_mongodb, close_mongodb_connection
 from app.api.v1.router import api_router
 from app.services.gemini_service import gemini_service
+from app.services.redis_cache import redis_cache
 
 
 # ============================================
@@ -60,6 +61,9 @@ async def lifespan(app: FastAPI):
     else:
         print("⚠️ Gemini AI not configured - using fallback responses")
     
+    # Connect to Redis cache
+    await redis_cache.connect()
+    
     print("✅ SAHAYAK AI Backend is ready!")
     print("📚 API Docs: http://localhost:8000/docs")
     
@@ -67,6 +71,7 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     print("\n🔌 Shutting down SAHAYAK AI Backend...")
+    await redis_cache.disconnect()
     await close_mongodb_connection()
     print("✅ Shutdown complete")
 
@@ -175,8 +180,20 @@ async def health_check():
         "components": {
             "mongodb": "connected" if mongodb_status else "disconnected",
             "gemini_ai": "available" if gemini_service.is_available() else "fallback_mode",
+            "redis_cache": "connected" if redis_cache.is_available() else "disabled",
         }
     }
+
+
+@app.get("/cache/stats", tags=["Health"])
+async def get_cache_stats():
+    """
+    Get Redis cache statistics.
+    
+    Returns cache hit/miss rates, connection status, and key counts.
+    Useful for monitoring cache effectiveness.
+    """
+    return await redis_cache.get_cache_stats()
 
 
 # ============================================
