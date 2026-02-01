@@ -38,9 +38,9 @@ class GeminiService:
         try:
             genai.configure(api_key=self.api_key)
             
-            # Use Gemini 1.5 Flash model (faster and more available)
+            # Use Gemini 2.0 Flash model (fast and capable)
             self.model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
+                model_name="gemini-2.0-flash",
                 generation_config={
                     "temperature": 0.7,
                     "top_p": 0.9,
@@ -50,9 +50,9 @@ class GeminiService:
             )
             
             self._configured = True
-            print("Gemini AI configured successfully with gemini-1.5-flash model")
+            print("✅ Gemini AI configured successfully with gemini-2.0-flash model")
         except Exception as e:
-            print(f"Gemini configuration failed: {e}")
+            print(f"❌ Gemini configuration failed: {e}")
             self._configured = False
     
     def is_available(self) -> bool:

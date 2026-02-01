@@ -196,6 +196,38 @@ async def get_cache_stats():
     return await redis_cache.get_cache_stats()
 
 
+@app.delete("/cache/clear", tags=["Health"])
+async def clear_cache():
+    """
+    Clear all playbook cache entries.
+    
+    ⚠️ USE WITH CAUTION: This removes all cached playbooks.
+    New requests will call Gemini API (slower + uses quota).
+    
+    Use this when:
+    - You've updated the Gemini prompt format
+    - You want to force fresh AI responses
+    - Cache has stale/incorrect data
+    """
+    if not redis_cache.is_available():
+        return {"success": False, "error": "Redis not connected"}
+    
+    try:
+        # Get all playbook keys and delete them
+        keys = await redis_cache.redis_client.keys("playbook:*")
+        deleted_count = 0
+        if keys:
+            deleted_count = await redis_cache.redis_client.delete(*keys)
+        
+        return {
+            "success": True,
+            "deleted_keys": deleted_count,
+            "message": f"Cleared {deleted_count} cached playbooks"
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ============================================
 # Exception Handlers
 # ============================================

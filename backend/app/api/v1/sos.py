@@ -190,6 +190,8 @@ async def quick_sos(
             "detected_subject": sos_request.subject,
             "detected_grade": sos_request.grade,
             "urgency": sos_request.urgency.value if sos_request.urgency else "medium",
+            "from_cache": result.get("from_cache", False),
+            "cache_timestamp": result.get("cache_timestamp"),
             "playbook": {
                 "title": playbook.title,
                 "summary": playbook.summary,
@@ -201,7 +203,7 @@ async def quick_sos(
                 "alternatives": playbook.alternatives,
                 "success_indicators": playbook.success_indicators,
                 "youtube_videos": [
-                    {"title": v.title, "url": v.url, "description": v.description}
+                    {"title": v.title, "url": v.url, "description": v.description, "duration": v.duration}
                     for v in playbook.youtube_videos
                 ] if playbook.youtube_videos else [],
                 "teaching_resources": [

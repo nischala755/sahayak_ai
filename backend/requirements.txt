@@ -26,6 +26,7 @@ google-generativeai==0.3.2
 
 # HTTP & ASYNC
 httpx==0.26.0
+aiohttp==3.9.1
 anyio==4.2.0
 
 # SECURITY

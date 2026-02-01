@@ -24,6 +24,7 @@ from typing import Dict, Any, Optional
 from app.services.gemini_service import gemini_service
 from app.services.context_engine import context_engine
 from app.services.redis_cache import redis_cache
+from app.services.edu_resources import edu_resources
 from app.db.models.sos_request import SOSRequest, SOSStatus
 from app.db.models.playbook import Playbook, PlaybookAction, VideoResource, TeachingResource
 from app.db.models.memory import ClassroomMemory
@@ -98,10 +99,16 @@ class PedagogyEngine:
                 language=language_name
             )
             
+            # Track if response is from cache
+            from_cache = False
+            cache_timestamp = None
+            
             if cached_response:
                 # Cache hit - use cached AI response
                 print(f"⚡ SEMANTIC CACHE HIT for: {sos_request.subject}/{sos_request.grade}/{sos_request.topic}")
                 ai_response = cached_response
+                from_cache = True
+                cache_timestamp = cached_response.get("cached_at")
             else:
                 # Cache miss - call Gemini AI
                 print(f"🤖 Calling Gemini AI for: {sos_request.subject}/{sos_request.grade}/{sos_request.topic}")
@@ -120,13 +127,21 @@ class PedagogyEngine:
                         language=language_name
                     )
             
-            # Step 5: Parse and structure the response
-            playbook = await self._create_playbook(
-                sos_request=sos_request,
-                ai_response=ai_response
+            # Step 5: Fetch real educational resources (YouTube, NCERT, DIKSHA)
+            educational_resources = await edu_resources.get_all_resources(
+                subject=sos_request.subject or "General",
+                grade=sos_request.grade or "5",
+                topic=sos_request.topic
             )
             
-            # Step 6: Update SOS with playbook reference
+            # Step 6: Parse and structure the response
+            playbook = await self._create_playbook(
+                sos_request=sos_request,
+                ai_response=ai_response,
+                edu_resources=educational_resources
+            )
+            
+            # Step 7: Update SOS with playbook reference
             sos_request.complete_processing(str(playbook.id))
             await sos_request.save()
             
@@ -137,6 +152,8 @@ class PedagogyEngine:
                 "success": True,
                 "playbook": playbook,
                 "processing_time_ms": sos_request.processing_time_ms,
+                "from_cache": from_cache,
+                "cache_timestamp": cache_timestamp,
             }
             
         except Exception as e:
@@ -151,18 +168,70 @@ class PedagogyEngine:
     async def _create_playbook(
         self,
         sos_request: SOSRequest,
-        ai_response: Dict[str, Any]
+        ai_response: Dict[str, Any],
+        edu_resources: Optional[Dict[str, Any]] = None
     ) -> Playbook:
         """
         Create and save a playbook from AI response.
         
         Parses the markdown response from Gemini and structures
-        it into a proper Playbook document.
+        it into a proper Playbook document. Uses real educational
+        resources fetched from APIs when available.
         """
         response_text = ai_response.get("text", "")
         
         # Parse the response
         parsed = self._parse_playbook_response(response_text)
+        
+        # Override YouTube videos with real API results if available
+        youtube_videos = parsed.get("youtube_videos", [])
+        if edu_resources and edu_resources.get("youtube"):
+            yt = edu_resources["youtube"]
+            if yt.get("type") == "direct" and yt.get("videos"):
+                youtube_videos = [
+                    {
+                        "title": v.get("title", ""),
+                        "url": v.get("url", ""),
+                        "description": f"Channel: {v.get('channel', 'Educational')}",  # Put channel in description
+                        "duration": None  # API doesn't return duration
+                    }
+                    for v in yt["videos"]
+                ]
+            else:
+                # Add search fallback
+                youtube_videos = [{
+                    "title": f"🔍 Search YouTube: {sos_request.topic or 'topic'} class {sos_request.grade or ''}",
+                    "url": yt.get("search_url", ""),
+                    "description": "Click to search for related educational videos",
+                    "duration": None
+                }]
+        
+        # Build NCERT reference from real data (model expects string, not dict)
+        ncert_reference = parsed.get("ncert_reference")
+        if edu_resources and edu_resources.get("ncert", {}).get("available"):
+            ncert = edu_resources["ncert"]
+            # Format as string with URL for display
+            book_name = ncert.get("book_name", "NCERT Textbook")
+            chapter = ncert.get("chapter")
+            pdf_url = ncert.get("pdf_url") or ncert.get("textbook_url", "")
+            
+            if chapter:
+                ncert_reference = f"{book_name} Chapter {chapter} | PDF: {pdf_url}"
+            else:
+                ncert_reference = f"{book_name} | Link: {pdf_url}"
+        
+        # Build teaching resources with real DIKSHA links
+        teaching_resources = parsed.get("teaching_resources", [])
+        if edu_resources and edu_resources.get("diksha", {}).get("available"):
+            diksha = edu_resources["diksha"]
+            diksha_resource = {
+                "title": f"DIKSHA: {sos_request.topic or 'Learning Resources'}",  # Required field
+                "url": diksha.get("web_url", ""),
+                "resource_type": "diksha",  # Required field
+                "description": diksha.get("text", ""),
+            }
+            # Add to beginning of resources
+            teaching_resources = [diksha_resource] + teaching_resources
         
         # Create playbook document
         playbook = Playbook(
@@ -173,10 +242,10 @@ class PedagogyEngine:
             recovery_steps=parsed.get("recovery_steps", []),
             alternatives=parsed.get("alternatives", []),
             success_indicators=parsed.get("success_indicators", []),
-            youtube_videos=parsed.get("youtube_videos", []),
-            teaching_resources=parsed.get("teaching_resources", []),
+            youtube_videos=youtube_videos,
+            teaching_resources=teaching_resources,
             teaching_tips=parsed.get("teaching_tips", []),
-            ncert_reference=parsed.get("ncert_reference"),
+            ncert_reference=ncert_reference,
             estimated_time_minutes=parsed.get("estimated_time", 10),
             difficulty_level=parsed.get("difficulty", "medium"),
             model_used="gemini-2.5-flash",
