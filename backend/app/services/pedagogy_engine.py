@@ -305,16 +305,24 @@ class PedagogyEngine:
                 result["summary"] = summary_match.group(1).strip()[:500]
                 break
         
-        # Extract immediate actions (numbered list)
+        # Extract immediate actions (numbered list OR bullet list)
         immediate_patterns = [
-            r'###?\s*(?:⚡\s*)?Immediate Actions[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
-            r'Immediate Actions[^\n]*\n((?:[\d]+[\.\)].+\n?)+)',
+            r'###?\s*(?:⚡\s*)?Immediate Actions[^\n]*\n((?:[\d]+[\.:\)].+\n?)+)',
+            r'Immediate Actions[^\n]*\n((?:[\d]+[\.:\)].+\n?)+)',
+            r'###?\s*(?:⚡\s*)?Immediate Actions[^\n]*\n((?:[-•*]\s*.+\n?)+)',
+            r'Do\s*(?:NOW|RIGHT\s*NOW)[^\n]*\n((?:[\d]+[\.:\)].+\n?)+)',
+            r'Do\s*(?:NOW|RIGHT\s*NOW)[^\n]*\n((?:[-•*]\s*.+\n?)+)',
         ]
         for pattern in immediate_patterns:
             immediate_match = re.search(pattern, text, re.IGNORECASE)
             if immediate_match:
-                actions = re.findall(r'[\d]+[\.\)]\s*(.+?)(?:\n|$)', immediate_match.group(1))
-                result["immediate_actions"] = [a.strip() for a in actions[:5] if a.strip()]
+                content = immediate_match.group(1)
+                # Try numbered first
+                actions = re.findall(r'[\d]+[\.:\)]\s*(.+?)(?:\n|$)', content)
+                if not actions:
+                    # Try bullet points
+                    actions = re.findall(r'[-•*]\s*(.+?)(?:\n|$)', content)
+                result["immediate_actions"] = [a.strip() for a in actions[:5] if a.strip() and len(a.strip()) > 5]
                 break
         
         # Extract alternatives
@@ -357,6 +365,7 @@ class PedagogyEngine:
         step_patterns = [
             r'\*\*Step\s*(\d+)[:\s]*([^\*]+)\*\*\s*\((\d+)\s*(?:min|minutes)?\)',
             r'Step\s*(\d+)[:\s]*\*\*([^\*]+)\*\*\s*\((\d+)\s*(?:min|minutes)?\)',
+            r'###?\s*Step\s*(\d+)[:\s]*([^\n]+?)\s*\((\d+)\s*(?:min|minutes)?\)',
         ]
         
         for pattern in step_patterns:
@@ -372,7 +381,7 @@ class PedagogyEngine:
                     )
                 break
         
-        # If no steps parsed, try simpler format
+        # If no steps parsed, try simpler format with bold titles
         if not result["recovery_steps"]:
             simple_steps = re.findall(r'\*\*Step\s*(\d+)[^:]*:\s*([^\*\n]+)', text, re.IGNORECASE)
             for step_num, step_title in simple_steps[:5]:
@@ -380,9 +389,23 @@ class PedagogyEngine:
                     PlaybookAction(
                         step_number=int(step_num),
                         action=step_title.strip(),
-                        duration_minutes=3,  # Default duration
+                        duration_minutes=3,
                     )
                 )
+        
+        # Try Recovery Steps section with numbered items
+        if not result["recovery_steps"]:
+            recovery_match = re.search(r'Recovery Steps[^\n]*\n((?:[\d]+[\.:\)].+\n?)+)', text, re.IGNORECASE)
+            if recovery_match:
+                items = re.findall(r'[\d]+[\.:\)]\s*(.+?)(?:\n|$)', recovery_match.group(1))
+                for i, item in enumerate(items[:5], 1):
+                    result["recovery_steps"].append(
+                        PlaybookAction(
+                            step_number=i,
+                            action=item.strip(),
+                            duration_minutes=3,
+                        )
+                    )
         # Generate YouTube search links based on detected topic
         # AI cannot generate real YouTube URLs - generate search links instead
         subject = result.get("subject", "")

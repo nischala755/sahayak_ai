@@ -197,7 +197,7 @@ async def quick_sos(
                 "summary": playbook.summary,
                 "immediate_actions": playbook.immediate_actions,
                 "recovery_steps": [
-                    {"step": step.step_number, "action": step.action, "minutes": step.duration_minutes}
+                    {"step_number": step.step_number, "action": step.action, "duration_minutes": step.duration_minutes}
                     for step in playbook.recovery_steps
                 ],
                 "alternatives": playbook.alternatives,

@@ -34,7 +34,7 @@ class ContextEngine:
     
     # Subject keywords mapping
     SUBJECT_PATTERNS = {
-        "mathematics": ["math", "maths", "mathematics", "गणित", "ಗಣಿತ", "calculation", "numbers", "algebra", "geometry", "fraction", "decimal"],
+        "mathematics": ["math", "maths", "mathematics", "गणित", "ಗಣಿತ", "calculation", "numbers", "algebra", "geometry", "fraction", "decimal", "multiplication", "division", "addition", "subtraction", "tables", "percentage", "ratio", "equation", "sum", "product", "trigonometry", "quadratic"],
         "science": ["science", "विज्ञान", "ವಿಜ್ಞಾನ", "physics", "chemistry", "biology", "experiment"],
         "english": ["english", "अंग्रेजी", "ಇಂಗ್ಲಿಷ್", "grammar", "reading", "writing", "comprehension"],
         "hindi": ["hindi", "हिंदी", "ಹಿಂದಿ"],

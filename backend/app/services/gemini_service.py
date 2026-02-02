@@ -218,7 +218,7 @@ Generate an immediate teaching rescue playbook with helpful resources. The teach
 ## OUTPUT FORMAT (Use this exact structure with markdown):
 
 ### Title
-[Brief title for this rescue strategy - specific to the problem]
+[Create a SPECIFIC title that includes the SUBJECT and TOPIC. Example: "Fractions Made Easy: Visual Learning for Class 5" or "Addition Rescue: Hands-On Counting for Class 2". MUST mention the topic!]
 
 ### Summary
 [One paragraph summary of the approach tailored to this specific classroom situation]

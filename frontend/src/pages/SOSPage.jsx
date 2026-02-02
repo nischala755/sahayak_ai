@@ -118,6 +118,11 @@ export default function SOSPage() {
         language,
       );
       if (response.success) {
+        console.log('SOS Response:', response);
+        console.log('Playbook:', response.playbook);
+        console.log('YouTube Videos:', response.playbook?.youtube_videos);
+        console.log('NCERT:', response.playbook?.ncert_reference);
+        console.log('Teaching Tips:', response.playbook?.teaching_tips);
         setResult(response);
       } else {
         setError(response.error || "Failed to generate playbook");
@@ -316,11 +321,10 @@ export default function SOSPage() {
                     <button
                       type="button"
                       onClick={toggleRecording}
-                      className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                        isRecording
-                          ? "bg-red-500 text-white animate-pulse"
-                          : "bg-primary-100 text-primary-600 hover:bg-primary-200"
-                      }`}
+                      className={`absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all ${isRecording
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-primary-100 text-primary-600 hover:bg-primary-200"
+                        }`}
                     >
                       {isRecording ? (
                         <MicOff className="w-5 h-5" />
@@ -396,11 +400,10 @@ export default function SOSPage() {
                         key={lang.code}
                         type="button"
                         onClick={() => setLanguage(lang.code)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          language === lang.code
-                            ? "border-primary-500 bg-primary-50 text-primary-700"
-                            : "border-slate-200 hover:border-slate-300 text-slate-600"
-                        }`}
+                        className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${language === lang.code
+                          ? "border-primary-500 bg-primary-50 text-primary-700"
+                          : "border-slate-200 hover:border-slate-300 text-slate-600"
+                          }`}
                       >
                         <span>{lang.flag}</span>
                         <span className="font-medium">{lang.label}</span>
@@ -524,15 +527,15 @@ export default function SOSPage() {
                           className="flex items-start gap-3 p-4 bg-white rounded-lg border border-primary-100"
                         >
                           <span className="step-number flex-shrink-0">
-                            {step.step}
+                            {step.step_number || (i + 1)}
                           </span>
                           <div>
                             <p className="text-slate-800 font-medium">
                               {step.action}
                             </p>
-                            {step.minutes && (
+                            {step.duration_minutes && (
                               <p className="text-sm text-slate-500 mt-1">
-                                ⏱️ {step.minutes} minutes
+                                ⏱️ {step.duration_minutes} minutes
                               </p>
                             )}
                           </div>
