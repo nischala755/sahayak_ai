@@ -140,4 +140,79 @@ export const dashboardAPI = {
     },
 };
 
+// ============================================
+// Knowledge Exchange API
+// ============================================
+
+export const knowledgeAPI = {
+    // Share a solution
+    shareSolution: async (data) => {
+        const response = await api.post('/knowledge/share', data);
+        return response;
+    },
+
+    // Get solution library
+    getLibrary: async (params = {}) => {
+        const response = await api.get('/knowledge/library', { params });
+        return response;
+    },
+
+    // Get single solution
+    getSolution: async (id) => {
+        const response = await api.get(`/knowledge/library/${id}`);
+        return response;
+    },
+
+    // Vote on a solution
+    voteSolution: async (id, vote, comment = null) => {
+        const response = await api.post(`/knowledge/library/${id}/vote`, { vote, comment });
+        return response;
+    },
+
+    // Get my solutions
+    getMySolutions: async () => {
+        const response = await api.get('/knowledge/my-solutions');
+        return response;
+    },
+
+    // Get AI mentor insights
+    getMentorInsights: async () => {
+        const response = await api.get('/knowledge/mentor/insights');
+        return response;
+    },
+
+    // Get weekly report
+    getWeeklyReport: async () => {
+        const response = await api.get('/knowledge/mentor/weekly-report');
+        return response;
+    },
+
+    // Search NCERT references
+    searchNCERT: async (topic, grade = null, subject = null) => {
+        const params = { topic };
+        if (grade) params.grade = grade;
+        if (subject) params.subject = subject;
+        const response = await api.get('/knowledge/ncert/search', { params });
+        return response;
+    },
+
+    // Get offline pack
+    getOfflinePack: async (language = 'en', grade = null) => {
+        const params = { language };
+        if (grade) params.grade = grade;
+        const response = await api.get('/knowledge/offline/pack', { params });
+        return response;
+    },
+
+    // RAG search
+    searchRAG: async (query, subject = null, grade = null) => {
+        const params = { query };
+        if (subject) params.subject = subject;
+        if (grade) params.grade = grade;
+        const response = await api.get('/knowledge/rag/search', { params });
+        return response;
+    },
+};
+
 export default api;
+

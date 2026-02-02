@@ -9,8 +9,28 @@ import Dashboard from './pages/Dashboard';
 import SOSPage from './pages/SOSPage';
 import History from './pages/History';
 
+// Role-Based Dashboards
+import TeacherDashboard from './pages/TeacherDashboard';
+import CRPDashboard from './pages/CRPDashboard';
+import DIETDashboard from './pages/DIETDashboard';
+
 // Layout
 import DashboardLayout from './components/layout/DashboardLayout';
+
+// Smart Dashboard Router - shows role-specific dashboard
+function SmartDashboard({ user }) {
+    const role = user?.role?.toLowerCase();
+
+    switch (role) {
+        case 'crp':
+            return <CRPDashboard user={user} />;
+        case 'diet':
+            return <DIETDashboard user={user} />;
+        case 'teacher':
+        default:
+            return <TeacherDashboard user={user} />;
+    }
+}
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -75,9 +95,23 @@ function App() {
             {/* Quick SOS (No auth needed for demo) */}
             <Route path="/sos" element={<SOSPage />} />
 
-            {/* Protected Routes */}
+            {/* Protected Routes - Smart Dashboard */}
             <Route
                 path="/dashboard"
+                element={
+                    isAuthenticated ? (
+                        <DashboardLayout user={user} onLogout={handleLogout}>
+                            <SmartDashboard user={user} />
+                        </DashboardLayout>
+                    ) : (
+                        <Navigate to="/login" replace />
+                    )
+                }
+            />
+
+            {/* Legacy Dashboard (for backward compatibility) */}
+            <Route
+                path="/dashboard/legacy"
                 element={
                     isAuthenticated ? (
                         <DashboardLayout user={user} onLogout={handleLogout}>
@@ -88,6 +122,7 @@ function App() {
                     )
                 }
             />
+
             <Route
                 path="/history"
                 element={
@@ -108,3 +143,4 @@ function App() {
 }
 
 export default App;
+
