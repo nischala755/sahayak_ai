@@ -70,7 +70,8 @@ class YouTubeService:
     
     def __init__(self):
         """Initialize YouTube service"""
-        self.api_key = os.getenv("YOUTUBE_API_KEY") or os.getenv("GEMINI_API_KEY")
+        from app.core.config import settings
+        self.api_key = settings.youtube_api_key or settings.gemini_api_key
         self.enabled = bool(self.api_key)
         
         if not self.enabled:

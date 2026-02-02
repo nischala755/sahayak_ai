@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     
     # --------------------------------------------
+    # YouTube Data API Settings
+    # --------------------------------------------
+    youtube_api_key: str = ""
+    
+    # --------------------------------------------
     # CORS Settings
     # --------------------------------------------
     # In production, set CORS_ORIGINS env var to: ["*"] or your specific domains
