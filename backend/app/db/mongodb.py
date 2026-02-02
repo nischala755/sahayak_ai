@@ -64,6 +64,10 @@ async def connect_to_mongodb():
     from app.db.models.sos_request import SOSRequest
     from app.db.models.playbook import Playbook
     from app.db.models.memory import ClassroomMemory
+    from app.db.models.knowledge import (
+        SharedSolution, NCERTReference, 
+        TeacherMentorProfile, OfflinePackVersion
+    )
     
     # Initialize Beanie with the database and document models
     await init_beanie(
@@ -73,6 +77,11 @@ async def connect_to_mongodb():
             SOSRequest,
             Playbook,
             ClassroomMemory,
+            # Knowledge Exchange models
+            SharedSolution,
+            NCERTReference,
+            TeacherMentorProfile,
+            OfflinePackVersion,
         ]
     )
     

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAHAYAK AI</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">SAHAYAK AI</span>
+            </div>
+            <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+        </header>
+
+        <!-- Auth Section (hidden when logged in) -->
+        <div id="authSection" class="section auth-section">
+            <p class="auth-message">Sign in to save your playbooks and track progress</p>
+            <input type="email" id="emailInput" placeholder="Email" class="input">
+            <input type="password" id="passwordInput" placeholder="Password" class="input">
+            <button id="loginBtn" class="btn btn-primary">Sign In</button>
+            <p class="auth-footer">
+                <a href="https://sahayak-ai-xi.vercel.app/register" target="_blank">Create Account</a>
+            </p>
+        </div>
+
+        <!-- SOS Section -->
+        <div id="sosSection" class="section">
+            <!-- Quick Problem Cards -->
+            <div class="quick-cards">
+                <button class="quick-card" data-problem="Students are confused about the concept">
+                    🤔 Concept Confusion
+                </button>
+                <button class="quick-card" data-problem="Students are not paying attention in class">
+                    📢 Attention Issue
+                </button>
+                <button class="quick-card" data-problem="Students are being disruptive">
+                    😤 Discipline Issue
+                </button>
+                <button class="quick-card" data-problem="Students don't understand the lesson">
+                    📚 Understanding Gap
+                </button>
+            </div>
+
+            <!-- Custom Problem Input -->
+            <div class="input-group">
+                <textarea id="problemInput" placeholder="Describe your classroom problem..." rows="3"></textarea>
+                <div class="input-actions">
+                    <select id="languageSelect" class="select-mini">
+                        <option value="en">English</option>
+                        <option value="hi">हिंदी</option>
+                        <option value="kn">ಕನ್ನಡ</option>
+                    </select>
+                    <button id="sosBtn" class="btn btn-sos">
+                        🆘 Get Help
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingSection" class="section loading-section hidden">
+            <div class="spinner"></div>
+            <p>Generating rescue playbook...</p>
+        </div>
+
+        <!-- Playbook Result -->
+        <div id="resultSection" class="section result-section hidden">
+            <div class="result-header">
+                <h3 id="resultTitle">Teaching Rescue Playbook</h3>
+                <button id="copyBtn" class="icon-btn" title="Copy">📋</button>
+            </div>
+
+            <div id="playbookContent" class="playbook-content">
+                <!-- Playbook content will be inserted here -->
+            </div>
+
+            <div class="result-actions">
+                <button id="newSosBtn" class="btn btn-secondary">New Problem</button>
+                <button id="saveBtn" class="btn btn-primary">💾 Save</button>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="section settings-panel hidden">
+            <h3>Settings</h3>
+            <div class="setting-item">
+                <label>API URL</label>
+                <input type="text" id="apiUrlInput" class="input" value="https://sahayak-ai-p720.onrender.com">
+            </div>
+            <div class="setting-item">
+                <label>Default Language</label>
+                <select id="defaultLangSelect" class="input">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="kn">Kannada</option>
+                </select>
+            </div>
+            <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+            <button id="logoutBtn" class="btn btn-danger">Logout</button>
+            <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <a href="https://sahayak-ai-xi.vercel.app" target="_blank">Open Full App</a>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
